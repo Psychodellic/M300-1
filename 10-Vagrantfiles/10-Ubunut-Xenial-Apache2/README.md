@@ -8,4 +8,3 @@ Dies erübgt den Parameter `--provider virtualbox` im `vagrant up` Befehl.
 Dieses Vagrantfile kann mit folgendem Befehl ausgeführt werden:
 
 `vagrant up`
-
