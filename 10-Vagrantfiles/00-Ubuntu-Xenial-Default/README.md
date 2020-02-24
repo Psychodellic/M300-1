@@ -1,5 +1,5 @@
 # Ubuntu Xenial Default
-##### Standard installation für Ubunutu 16.04 Xenial 
+##### Standard Installation von Ubunutu 16.04 Xenial 
 
 Dieses Vagrantfile wurde mit folgendem Befehl erzeugt:
 
