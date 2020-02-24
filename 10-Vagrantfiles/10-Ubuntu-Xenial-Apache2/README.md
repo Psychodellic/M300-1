@@ -1,4 +1,4 @@
-# ![Apache Logo](/99-Images/apache.png "Apache"){width: 80px;} Ubuntu Xenial Apache2
+# ![Apache Logo](/99-Images/apache.png "Apache") Ubuntu Xenial Apache2
 ##### Installation von Ubunutu 16.04 Xenial inklusilve des Apache2 Webservers
 
 Dieses Vagrantfile erstellt eine Ubuntu Xenial VM. An diese VM wird der `Local-Port 8080` an den `Guest-Port 80` weitergeleitet.
