@@ -7,5 +7,4 @@ Dieses Vagrantfile wurde mit folgendem Befehl erzeugt:
 
 Dieses Vagrantfile kann mit folgendem Befehl ausgeführt werden:
 
-
 `vagrant up --provider virtualbox`
