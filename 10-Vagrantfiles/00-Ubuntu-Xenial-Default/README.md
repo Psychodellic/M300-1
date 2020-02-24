@@ -3,8 +3,12 @@
 
 Dieses Vagrantfile wurde mit folgendem Befehl erzeugt:
 
-`vagrant init ubuntu/xenial64`
+```
+vagrant init ubuntu/xenial64
+```
 
 Dieses Vagrantfile kann mit folgendem Befehl ausgeführt werden:
 
-`vagrant up --provider virtualbox`
+```
+vagrant up --provider virtualbox
+```
