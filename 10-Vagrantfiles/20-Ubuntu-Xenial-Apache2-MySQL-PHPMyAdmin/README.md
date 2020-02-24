@@ -1,4 +1,4 @@
-# ![MySQL Logo](/99-Images/mysql.png "MySQL") Ubuntu Xenial Apache2 & MySQL & PHPMyAdmin
+# ![MySQL Logo](/99-Images/mysql.png "MySQL"){width: 80px;} Ubuntu Xenial Apache2 & MySQL & PHPMyAdmin
 ##### Installation von Ubunutu 16.04 Xenial inklusilve des Apache2 Webservers, der MySQL Datenbank & PHPMyAdmin
 
 Dieses Vagrantfile erstellt eine Ubuntu Xenial VM. An diese VM wird der `Local-Port 8080` an den `Guest-Port 80` weitergeleitet.
