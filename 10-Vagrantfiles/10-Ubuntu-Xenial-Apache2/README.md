@@ -6,7 +6,7 @@
 
 Dieses Vagrantfile erstellt eine Ubuntu Xenial VM. An diese VM wird der `Local-Port 8080` an den `Guest-Port 80` weitergeleitet.
 Das Verzeichnis `/var/www/` wird in das aktuelle Verzeichnis geshared. Der Provider wird auf Virtualbox gesetzt.
-Dies erübgt den Parameter `--provider virtualbox` im `vagrant up` Befehl.
+Dies erübrigt den Parameter `--provider virtualbox` im `vagrant up` Befehl.
 
 Dieses Vagrantfile kann mit folgendem Befehl ausgeführt werden:
 

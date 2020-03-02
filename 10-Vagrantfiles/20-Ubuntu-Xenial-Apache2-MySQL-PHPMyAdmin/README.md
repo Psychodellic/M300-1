@@ -5,7 +5,7 @@
 ##### Installation von Ubunutu 16.04 Xenial inklusilve des Apache2 Webservers, der MySQL Datenbank & PHPMyAdmin
 
 Dieses Vagrantfile erstellt eine Ubuntu Xenial VM. An diese VM wird der `Local-Port 8080` an den `Guest-Port 80` weitergeleitet.
-Der Provider wird auf Virtualbox gesetzt. Dies erübgt den Parameter `--provider virtualbox` im `vagrant up` Befehl.
+Der Provider wird auf Virtualbox gesetzt. Dies erübrigt den Parameter `--provider virtualbox` im `vagrant up` Befehl.
 
  * Das Verzeichnis `/var/www/` wird ins Verzeichnis `./web` geshared
  * Das Verzeichnis `/var/lib/mysql` wird ins Verzeichnis `./mysql` geshared
