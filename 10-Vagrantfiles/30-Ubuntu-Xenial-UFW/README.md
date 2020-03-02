@@ -1,4 +1,4 @@
-<img align="left" width="80" height="80" src="/99-Images/firewall.png" alt="Firewall Logo">
+<img align="left" height="80" src="/99-Images/firewall.png" alt="Firewall Logo">
 
 # Ubuntu Xenial UFW
 

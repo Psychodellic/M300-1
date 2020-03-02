@@ -1,4 +1,4 @@
-<img align="left" width="80" height="80" src="/99-Images/ubuntu.png" alt="Ubuntu Logo">
+<img align="left" height="80" src="/99-Images/ubuntu.png" alt="Ubuntu Logo">
 
 # Ubuntu Xenial Default
 

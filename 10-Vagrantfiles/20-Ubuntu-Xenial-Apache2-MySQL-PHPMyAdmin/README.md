@@ -1,4 +1,4 @@
-<img align="left" width="80" height="80" src="/99-Images/mysql.png" alt="MySQL Logo">
+<img align="left" height="80" src="/99-Images/mysql.png" alt="MySQL Logo">
 
 # Ubuntu Xenial Apache2 & MySQL & PHPMyAdmin
 
