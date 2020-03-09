@@ -11,4 +11,4 @@
   * [Ubuntu Xenial Apache2 Reverse Proxy](./40-Ubuntu-Xenial-Apache2-ReverseProxy)
 
 
-> [Zurück zum Globalen Inhalt](/)
+> [Zurück zum Globalen Inhalt](../)
