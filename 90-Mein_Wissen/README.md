@@ -5,7 +5,7 @@
 ###### In diesem Ordner sind mein Wissenstand und meine Lernprozesse dokumentiert.
 
  * [Vorwissen](./10-Vorwissen)
- * [Neu Gelerntes](./20-Neu_Gelerntes)
+ * [Neu Gelerntes](./20-Neu_gelerntes)
  * [Reflexion](./99-Reflexion)
 
 
