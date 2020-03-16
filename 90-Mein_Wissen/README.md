@@ -9,4 +9,4 @@
  * [Reflexion](./99-Reflexion)
 
 
-> [Zurück zum Globalen Inhalt](/)
+> [Zurück zum Globalen Inhalt](../../../)
