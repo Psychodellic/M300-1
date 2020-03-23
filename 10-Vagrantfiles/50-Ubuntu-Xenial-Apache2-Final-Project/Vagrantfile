@@ -1,0 +1,250 @@
+Vagrant.configure("2") do |config|
+    #Variables
+    ldap_admin_password = "vagrant"
+    mysql_root_password = "vagrant"
+
+    ldap_ip = "192.168.50.10"
+    db_ip = "192.168.50.20"
+    proxy_ip = "192.168.50.30"
+
+    domain = "m300.local"
+    ldap_servername = "ldap"
+    db_servername = "db"
+    proxy_servername = "proxy"
+    
+    ldap_fqdn = "#{ldap_servername}" + "." + "#{domain}"
+    db_fqdn = "#{db_servername}" + "." + "#{domain}"
+    proxy_fqdn = "#{proxy_servername}" + "." + "#{domain}"
+
+    config.vm.provider "virtualbox" do |vb|
+        vb.memory = "512" 
+    end
+    
+    config.vm.define "ldap" do |ldap|
+        ldap.vm.box = "ubuntu/xenial64"
+        ldap.vm.network "private_network", ip: "#{ldap_ip}", virtualbox__intnet: "m300"
+        ldap.vm.hostname = "#{ldap_fqdn}"
+        ldap.vm.provision "shell", inline: <<-SHELL
+            # Update Repository
+            sudo apt-get update
+
+            # Preconfigure LDAP for installation and install it
+            sudo debconf-set-selections <<< "slapd slapd/internal/generated_adminpw password #{ldap_admin_password}"
+            sudo debconf-set-selections <<< "slapd slapd/password2 password #{ldap_admin_password}"
+            sudo debconf-set-selections <<< "slapd slapd/internal/adminpw password #{ldap_admin_password}"
+            sudo debconf-set-selections <<< "slapd slapd/password1 password #{ldap_admin_password}"
+            sudo debconf-set-selections <<< "slapd slapd/backend: string MDB"
+            sudo debconf-set-selections <<< "slapd slapd/domain string #{domain}"
+
+            # Install LDAP
+            sudo apt-get install slapd ldap-utils -yq
+
+            # Install phpLDAPAdmin
+            sudo apt-get install phpldapadmin -yq
+
+            # Configure phpLDAPAdmin
+            sudo sed -i "s/\$servers->setValue('server','name','.*');/\$servers->setValue('server','name','#{domain}');/g" /etc/phpldapadmin/config.php
+            dc=$(echo dc=#{domain} | sed "s/[.]/,dc=/g")
+            sudo sed -i "s/\$servers->setValue('server','base', array('dc=example,dc=com'));/\$servers->setValue('server','base', array('$dc'));/g" /etc/phpldapadmin/config.php
+            sudo sed -i "s/\$servers->setValue('login','bind_id','.*');/\$servers->setValue('login','bind_id','');/g" /etc/phpldapadmin/config.php
+            sudo sed -i "s/\$config->custom->appearance\['hide_template_warning'\] = false;/\$config->custom->appearance['hide_template_warning'] = true;/g" /etc/phpldapadmin/config.php
+            sudo sed -i "s/dc=example,dc=com/$dc/g" /etc/phpldapadmin/config.php
+            
+            # Restart Apache2 (apply Changes)
+            sudo service apache2 restart
+            
+            # Install UFW
+            sudo apt-get install ufw -yq
+            
+            # UFW Rules
+            sudo ufw allow 22/tcp
+            sudo ufw allow 80/tcp
+            sudo ufw allow ldap
+
+            # Enable UFW
+            sudo ufw --force enable
+
+        SHELL
+    end
+
+    config.vm.define "db" do |db|
+        db.vm.box = "ubuntu/bionic64"
+        db.vm.synced_folder "./mysql", "/var/lib/mysql", create: true
+        db.vm.network "private_network", ip: "#{db_ip}", virtualbox__intnet: "m300"
+        db.vm.hostname = "#{db_fqdn}"
+        db.vm.provision "shell", inline: <<-SHELL
+            # Update Repository
+            sudo apt-get update
+            
+            # Install Apache2 & Modules
+            sudo apt-get install apache2 -yq
+            sudo apt-get install php php-gettext libapache2-mod-php -yq
+
+            # Preconfigure MySQL for installation and install it
+            sudo debconf-set-selections <<< "mysql-server mysql-server/root_password password #{mysql_root_password}"
+            sudo debconf-set-selections <<< "mysql-server mysql-server/root_password_again password #{mysql_root_password}"
+            sudo apt-get -yq install mysql-server
+
+            # Preconfigure PHPMyAdmin for installation and install it
+            sudo debconf-set-selections <<< "phpmyadmin phpmyadmin/internal/skip-preseed boolean true"
+            sudo debconf-set-selections <<< "phpmyadmin phpmyadmin/reconfigure-webserver multiselect apache2"
+            sudo debconf-set-selections <<< "phpmyadmin phpmyadmin/dbconfig-install boolean false"
+            sudo apt-get -yq install phpmyadmin
+
+            # Restart Apache2 (apply Changes)
+            sudo service apache2 restart
+            
+            #ldap installation
+            dc=$(echo dc=#{domain} | sed "s/[.]/,dc=/g")
+            admin=$(echo cn=admin,$dc)
+
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/dblogin    boolean    false"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/dbrootlogin    boolean    true"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/ldapns/base-dn    string    $dc"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/ldapns/ldap-server    string    ldap://#{ldap_ip}/"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/ldapns/ldap_version    select    3"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/move-to-debconf    boolean    true"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/override    boolean    true"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/rootbinddn    string    $admin"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/rootbindpw    #{ldap_admin_password}"
+            sudo debconf-set-selections <<< "libnss-ldap    libnss-ldap/dbrootlogin    boolean    true"
+            sudo debconf-set-selections <<< "libnss-ldap    libnss-ldap/override    boolean    true"
+            sudo debconf-set-selections <<< "libnss-ldap    libnss-ldap/rootbinddn    string    $admin"
+            sudo debconf-set-selections <<< "libnss-ldap    libnss-ldap/rootbindpw    #{ldap_admin_password}"
+            sudo debconf-set-selections <<< "libnss-ldap    shared/ldapns/base-dn    string    $dc"
+            sudo debconf-set-selections <<< "libnss-ldap    shared/ldapns/ldap-server    string    ldap://#{ldap_ip}/"
+            sudo debconf-set-selections <<< "libnss-ldap    shared/ldapns/ldap_version    select    3"
+            sudo debconf-set-selections <<< "libpam-ldap    libpam-ldap/dbrootlogin    boolean    true"
+            sudo debconf-set-selections <<< "libpam-ldap    libpam-ldap/override    boolean    true"
+            sudo debconf-set-selections <<< "libpam-ldap    libpam-ldap/rootbinddn    string    $admin"
+            sudo debconf-set-selections <<< "libpam-ldap    libpam-ldap/rootbindpw    #{ldap_admin_password}"
+            sudo debconf-set-selections <<< "libpam-ldap    shared/ldapns/base-dn    string    $dc"
+            sudo debconf-set-selections <<< "libpam-ldap    shared/ldapns/ldap-server    string    ldap://#{ldap_ip}/"
+            sudo debconf-set-selections <<< "libpam-ldap    shared/ldapns/ldap_version    select    3"
+            sudo debconf-set-selections <<< "libpam-runtime    libpam-runtime/profiles    multiselect    unix, ldap"
+            
+            sudo apt-get install libnss-ldap libpam-ldap ldap-utils nscd -yq
+            
+            sudo auth-client-config -t nss -p lac_ldap
+            sudo pam-auth-update --enable mkhomedir
+
+            sudo systemctl restart nscd
+            sudo systemctl enable nscd
+            
+            # Install UFW
+            sudo apt-get install ufw -yq
+            
+            # UFW Rules
+            sudo ufw allow 22/tcp
+            sudo ufw allow 80/tcp
+            sudo ufw allow 3306/tcp
+
+            # Enable UFW
+            sudo ufw --force enable
+
+        SHELL
+    end
+
+    config.vm.define "proxy" do |proxy|
+        proxy.vm.box = "ubuntu/bionic64"
+        proxy.vm.network "forwarded_port", guest:80, host:8080
+        proxy.vm.synced_folder "./web", "/var/www/", create: true
+        proxy.vm.network "private_network", ip: "#{proxy_ip}", virtualbox__intnet: "m300"
+        proxy.vm.hostname = "#{proxy_fqdn}"
+        proxy.vm.provision "shell", inline: <<-SHELL
+            # Update Repository
+            sudo apt-get update
+            
+            # Install Apache2 & Modules
+            sudo apt-get install apache2 -yq
+
+            # Activate Proxy
+            sudo apt-get install libxml2-dev -yq
+            sudo a2enmod proxy
+            sudo a2enmod proxy_html
+            sudo a2enmod proxy_http 
+            sudo a2enmod rewrite
+
+            #Configure Proxy
+			echo "echo '<VirtualHost *:80>' > /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	ServerName #{ldap_servername}' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	ServerAlias www.#{ldap_servername} #{ldap_fqdn} www.#{ldap_fqdn}' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	RewriteEngine on' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	RewriteCond %{REQUEST_URI} ^/$' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	RewriteRule (.*) /phpmyadmin/ [R=301]' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	<Location /phpldapadmin/>' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '		ProxyPreserveHost On' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '		ProxyPass http://#{ldap_ip}/phpldapadmin/' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '		ProxyPassReverse http://#{ldap_ip}/phpldapadmin/' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	</Location>' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '</VirtualHost>' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '<VirtualHost *:80>' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	ServerName #{db_servername}' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	ServerAlias www.#{db_servername} #{db_fqdn} www.#{db_fqdn}' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	RewriteEngine on' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	RewriteCond %{REQUEST_URI} ^/$' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	RewriteRule (.*) /phpmyadmin/ [R=301]' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	<Location /phpmyadmin/>' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '		ProxyPreserveHost On' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '		ProxyPass http://#{db_ip}/phpmyadmin/' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '		ProxyPassReverse http://#{db_ip}/phpmyadmin/' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	</Location>' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '</VirtualHost>' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			
+			sudo a2ensite /etc/apache2/sites-available/#{proxy_fqdn}.conf
+
+            # Restart Apache2 (apply Changes)
+            sudo service apache2 restart
+            
+            #ldap installation
+            dc=$(echo dc=#{domain} | sed "s/[.]/,dc=/g")
+            admin=$(echo cn=admin,$dc)
+
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/dblogin    boolean    false"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/dbrootlogin    boolean    true"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/ldapns/base-dn    string    $dc"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/ldapns/ldap-server    string    ldap://#{ldap_ip}/"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/ldapns/ldap_version    select    3"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/move-to-debconf    boolean    true"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/override    boolean    true"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/rootbinddn    string    $admin"
+            sudo debconf-set-selections <<< "ldap-auth-config    ldap-auth-config/rootbindpw    #{ldap_admin_password}"
+            sudo debconf-set-selections <<< "libnss-ldap    libnss-ldap/dbrootlogin    boolean    true"
+            sudo debconf-set-selections <<< "libnss-ldap    libnss-ldap/override    boolean    true"
+            sudo debconf-set-selections <<< "libnss-ldap    libnss-ldap/rootbinddn    string    $admin"
+            sudo debconf-set-selections <<< "libnss-ldap    libnss-ldap/rootbindpw    #{ldap_admin_password}"
+            sudo debconf-set-selections <<< "libnss-ldap    shared/ldapns/base-dn    string    $dc"
+            sudo debconf-set-selections <<< "libnss-ldap    shared/ldapns/ldap-server    string    ldap://#{ldap_ip}/"
+            sudo debconf-set-selections <<< "libnss-ldap    shared/ldapns/ldap_version    select    3"
+            sudo debconf-set-selections <<< "libpam-ldap    libpam-ldap/dbrootlogin    boolean    true"
+            sudo debconf-set-selections <<< "libpam-ldap    libpam-ldap/override    boolean    true"
+            sudo debconf-set-selections <<< "libpam-ldap    libpam-ldap/rootbinddn    string    $admin"
+            sudo debconf-set-selections <<< "libpam-ldap    libpam-ldap/rootbindpw    #{ldap_admin_password}"
+            sudo debconf-set-selections <<< "libpam-ldap    shared/ldapns/base-dn    string    $dc"
+            sudo debconf-set-selections <<< "libpam-ldap    shared/ldapns/ldap-server    string    ldap://#{ldap_ip}/"
+            sudo debconf-set-selections <<< "libpam-ldap    shared/ldapns/ldap_version    select    3"
+            sudo debconf-set-selections <<< "libpam-runtime    libpam-runtime/profiles    multiselect    unix, ldap"
+
+            sudo apt-get install libnss-ldap libpam-ldap ldap-utils nscd -yq
+
+            sudo auth-client-config -t nss -p lac_ldap
+            sudo pam-auth-update --enable mkhomedir
+
+            sudo systemctl restart nscd
+            sudo systemctl enable nscd
+
+            # Install UFW
+            sudo apt-get install ufw -yq
+            
+            # UFW Rules
+            sudo ufw allow 22/tcp
+            sudo ufw allow 80/tcp
+
+            # Enable UFW
+            sudo ufw --force enable
+
+        SHELL
+    end
+    
+end
