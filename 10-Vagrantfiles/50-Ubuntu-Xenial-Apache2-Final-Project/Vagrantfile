@@ -166,12 +166,12 @@ Vagrant.configure("2") do |config|
             sudo a2enmod rewrite
 
             #Configure Proxy
-			echo "echo '<VirtualHost *:80>' > /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+	        echo "echo '<VirtualHost *:80>' > /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
 			echo "echo '	ServerName #{ldap_servername}' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
 			echo "echo '	ServerAlias www.#{ldap_servername} #{ldap_fqdn} www.#{ldap_fqdn}' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
 			echo "echo '	RewriteEngine on' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
 			echo "echo '	RewriteCond %{REQUEST_URI} ^/$' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
-			echo "echo '	RewriteRule (.*) /phpmyadmin/ [R=301]' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
+			echo "echo '	RewriteRule (.*) /phpldapadmin/ [R=301]' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
 			echo "echo '	<Location /phpldapadmin/>' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
 			echo "echo '		ProxyPreserveHost On' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
 			echo "echo '		ProxyPass http://#{ldap_ip}/phpldapadmin/' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
