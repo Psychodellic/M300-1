@@ -24,7 +24,7 @@ Folgendes sind die Standardwerte:
    - Domain: m300.local
    - IP: 192.168.50.20
    - MySQL-Root Password: vagrant
- * MySQL-Server
+ * Proxy-Server
    - Hostname: proxy
    - Domain: m300.local
    - IP: 192.168.50.30
