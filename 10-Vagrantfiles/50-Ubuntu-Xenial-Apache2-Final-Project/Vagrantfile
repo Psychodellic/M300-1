@@ -192,7 +192,7 @@ Vagrant.configure("2") do |config|
 			echo "echo '	</Location>' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
 			echo "echo '</VirtualHost>' >> /etc/apache2/sites-available/#{proxy_fqdn}.conf" | sudo bash
 			
-			sudo a2ensite /etc/apache2/sites-available/#{proxy_fqdn}.conf
+			sudo a2ensite #{proxy_fqdn}.conf
 
             # Restart Apache2 (apply Changes)
             sudo service apache2 restart
