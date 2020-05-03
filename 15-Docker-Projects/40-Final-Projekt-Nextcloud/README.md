@@ -9,16 +9,18 @@ Dieses Compose-File erstellt einen Nextcloud Container, sowie einen MariaDB Cont
 Die Logins sehen aktuell wie folgt aus:
 
  * MariaDB Datenbank:
+
 | Username  | Password |
 |:---------:|:--------:|
 |   root    |   m300   |
 | nextcloud |   m300   |
 
+
 * Nextcloud Benutzer:
+
 | Username  | Password |
 |:---------:|:--------:|
 |   admin   |   m300   |
-
 
 
 Dieses Docker-Compose File kann mit folgendem Befehl ausgeführt werden:
