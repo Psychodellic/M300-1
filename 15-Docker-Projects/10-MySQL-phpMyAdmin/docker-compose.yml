@@ -1,0 +1,22 @@
+version: '3.8'
+services:
+
+  db:
+    image: mysql
+    command: --default-authentication-plugin=mysql_native_password
+    restart: always
+    volumes: 
+      - mysql:/var/lib/mysql 
+    environment:
+      MYSQL_ROOT_PASSWORD: M300
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - 8080:80
+    restart: always
+    environment: 
+      PMA_HOST: db
+
+volumes: 
+  mysql:
